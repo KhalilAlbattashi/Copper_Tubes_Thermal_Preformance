@@ -1,0 +1,499 @@
+---
+title: "MATH 4753 Project 2"
+author: "Khalil Albattashi"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: 4
+  pdf_document:
+    df_print: kable
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+bibliography: project.bib
+abstract: This project is all about applications of SLR to real data using R. I will be utilizing a dataset that contains information regarding the Thermal performance of copper tubes used in refrigration and process industry.My project data is taken from a practice problem in William M. Mendenhall & Terry L. Sincich’s textbook, Statistics for Engineering and the Sciences, 6th (2016). I will be utilizing the textbook, the data set, and the knowledge accumulated though the semseter. the specific goal is to apply a statistical theory called Simple Linear Regression to the data collected to examine the relationship between the Unflooded Area Ratio and the Heat Transfer Enhancment. the main objectve is to determine if there is a statistical relationship or not between the data. 
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaflet)
+library(dplyr)
+```
+
+
+
+# Introduction
+
+
+Many materials are used for cooling or heating such that, copper, and iron. in this project we are focused on the copper tubes. copper tubers are used in many different applications like air conditioning, air heaters, driers, and generator coolers. also there are different methods of heating and cooling applied to the copper tubes in order to achive the cooling or the heating. the one we are focused on in this project are a the fin tuber
+
+![copper Fin tubes](fig10-150x150-wfyohlpoxirz.jpg)
+
+
+
+![](fig11-150x150-wfawamcwgifl.png)
+
+
+
+
+## the Data
+A study was conducted to model the thermal performance of integral fin tubes used in the refrigeration and process industries
+(Journal of Heat Transfer, Aug. 1990). Twenty-four specially manufactured integral-fin tubes having rectangular shaped fins made of copper were used in the experiment.
+Vapor was released downward into each tube and the
+vapor-side heat transfer coefficient (based on the outside
+surface area of the tube) was measured.
+
+
+
+```{r}
+FINTUBES <- read.csv("FINTUBES.csv")
+head(FINTUBES)
+```
+
+### the problem to be solved
+I have to analyze the data to determine if there is a statistical relationship between the Area Ratio and the Heat Transfer Enhancement to see if this is a ggod method or not for this field.
+
+# Theory of the analysis
+
+In this experiment the Area Ratio (y) tends to increase as the Heat transfer (x) when the  area Ratio increases the heat Transfer performance is also increases. here i want to make a model relating the two variables. I will define the Ratio as the dependent variable and the Heat as the independent Variable.
+
+ A simple linear regression model will be used in my data analysis. we will asssume that the mean of y data for any x value will forma line and any point that is away from the line is equal to $\epsilon$.
+ 
+$$\begin{equation}
+y = \beta_{0}+\beta_{1}x_{i}+\epsilon_{i}
+\end{equation}
+$$
+
+
+in order to fit the SLR model to the data set we need to estimate the parameters $\beta_{0}, and \ \beta_{1}$ we need to makr the followinf assumptions about $\epsilon$:
+
+1) the mean of the probability distribution of $\epsilon$ = 0.
+
+2) the variance of the probability distribution of $\epsilon$ is constant for all values of the independent variable - for a straight line model this means $V(\epsilon)$ = a constant for all values of x.
+
+
+3) the probability distribution of $\epsilon$ is normal.
+
+4) the errors associated with different observations are independent of one another.
+
+
+
+
+# Estimating the Parameters
+
+## Plots and Assumptions
+```{r}
+library(s20x)
+pairs20x(FINTUBES)
+```
+```{r}
+library(ggplot2)
+g = ggplot(FINTUBES, aes(x = HEAT, y = RATIO)) + geom_point()
+g = g + geom_smooth(method = "loess")
+g
+```
+
+
+
+### Model of least square
+```{r}
+FINTUBES.lm = lm(RATIO~HEAT, data = FINTUBES)
+summary(FINTUBES.lm)
+```
+
+
+This Method gives us the following values:
+$$\begin{equation}
+\hat{\beta_{0}} = 0.23275 \\
+\hat{\beta_{1}} = 0.34497
+
+\end{equation}
+$$
+
+
+### Calculating the Confidence Interval
+```{r}
+ciReg(FINTUBES.lm, conf.level = 0.95)
+```
+
+
+### The Least Square Estimates
+
+$$\begin{equation}
+\hat{\beta_{0}} + \hat{\beta_{1}}x_{i} =0.23275 + 0.34497 \times x_{i}
+
+\end{equation}
+$$
+
+
+this mean that the $\hat{\beta_{1}} = 0.34497$ is the slope and the area ratio increase by 0.34497 for every heat transfer value
+
+
+
+
+
+```{r}
+plot(RATIO~HEAT,bg="Blue",pch=21,cex=1.2,
+     ylim=c(0,1.1*max(RATIO)),xlim=c(0,1.1*max(HEAT)),
+     main="Scatter Plot and Fitted Line of Heat vs Ratio", data=FINTUBES)
+abline(FINTUBES.lm)
+```
+
+
+from the scatter plot we can see that a straight line fit the data.
+
+
+
+
+
+### Plot of Residuals
+
+Plotting the residual line segments allows us to see the distance to which the points vary from the line we are trying to fit to the data
+
+
+
+```{r}
+plot(RATIO~HEAT,bg="Blue",pch=21,cex=1.2,
+              ylim=c(0,1.1*max(RATIO)),xlim=c(0,1.1*max(HEAT)),
+              main="Residual Line Segments of HEAT vs RATIO", data=FINTUBES)
+ht.lm=with(FINTUBES, lm(RATIO~HEAT))
+abline(ht.lm)
+yhat=with(FINTUBES,predict(FINTUBES.lm,data.frame(HEAT)))
+with(FINTUBES,{segments(HEAT,RATIO,HEAT,yhat)})
+abline(FINTUBES.lm)
+```
+
+
+
+
+
+
+### Plot of Means
+
+Plotting the difference between the mean of the heat and the ratio will provide us with the MSS, and RSS values.
+
+
+
+```{r}
+plot(RATIO~HEAT,bg="Blue",pch=21,cex=1.2,
+              ylim=c(0,1.1*max(RATIO)),xlim=c(0,1.1*max(HEAT)),
+              main="Mean of HEAT vs RATIO", data=FINTUBES)
+
+abline(FINTUBES.lm)
+with(FINTUBES, abline(h=mean(RATIO)))
+abline(FINTUBES.lm)
+with(FINTUBES, segments(HEAT, mean(RATIO), HEAT, yhat, col = "red"))
+```
+
+
+
+
+
+### Plot of Means with Total Deviation Line Segments
+
+```{r}
+plot(RATIO~HEAT,bg="Blue",pch=21,cex=1.2,
+              ylim=c(0,1.1*max(RATIO)),xlim=c(0,1.1*max(HEAT)),
+              main="Total Deviation Line Segments of HEAT vs RATIO", data=FINTUBES)
+with(FINTUBES, abline(h=mean(RATIO)))
+with(FINTUBES, segments(HEAT,RATIO, HEAT, mean(RATIO), col = "red"))
+```
+
+
+
+
+### Using RSS, MSS, and TSS Values
+
+
+
+```{r}
+RSS = with(FINTUBES, sum((RATIO-yhat)^2))
+RSS
+```
+```{r}
+MSS = with(FINTUBES, sum((yhat-mean(RATIO))^2))
+MSS
+```
+
+
+```{r}
+TSS = with(FINTUBES, sum((RATIO-mean(RATIO))^2))
+TSS
+```
+
+```{r}
+MSS/TSS
+```
+$R^2 = \frac{MSS}{TSS}$  which means that the value calculated is the value for the trend line. when $R^2$ is closer to 1 that means the it fit for the trend line
+
+
+
+## Specifying the Probability Distribution
+
+
+### Scatter Plot of HEAT versus RATIO
+
+```{r}
+library(s20x)
+trendscatter(RATIO~HEAT, f = 0.5, data = FINTUBES, main="HEAT vs RATIO")
+```
+
+
+
+the Red lines are the region of error where the line of best could be found, but we see a linear trend with small region of error.
+
+
+Linear model:
+
+```{r}
+FINTUBES.lm = with(FINTUBES, lm(RATIO~HEAT))
+```
+
+the Residuals:
+
+```{r}
+FINTUBES.res = residuals(FINTUBES.lm)
+```
+
+the fitted values:
+
+
+```{r}
+FINTUBES.fit = fitted(FINTUBES.lm)
+```
+
+
+### Plot the Residuals versus RATIO
+
+```{r}
+plot(FINTUBES$RATIO,FINTUBES.res, xlab="RATIO",ylab="Residuals",ylim=c(-1.5*max(FINTUBES.res),1.5*max(FINTUBES.res)),xlim=c(0,1.6*max(FINTUBES.fit)), main="Residuals vs RATIO")
+```
+
+
+From the plot we see that the residuals are somewhat around the zero of the y-axis.
+
+
+
+### Plot the Residuals versus Fitted values
+
+
+```{r}
+trendscatter(FINTUBES.res~FINTUBES.fit, f = 0.5, data = FINTUBES.lm, xlab="Fitted Values",ylab="Residuals",ylim=c(-1.1*max(FINTUBES.res),1.1*max(FINTUBES.res)),xlim=c(0,1.1*max(FINTUBES.fit)), main="Residuals vs Fitted Values")
+```
+
+
+we see almost uniformity about zero. the linear model is a good fit for the data.
+
+
+
+### Normality Check:
+
+```{r}
+normcheck(FINTUBES.lm, shapiro.wilk = TRUE)
+```
+
+
+
+The p-value is 0.088 > $\alpha$ = 0.05. the results of the Shapiro-Wilk test shows that we do not have enough evidence to reject the null hypothesis, so we assume that the errors are distributed normally.
+
+$$\begin{equation}
+ \epsilon \sim  N(0, \sigma^2)
+\end{equation}
+$$
+
+
+
+## Testing Another Model for Comparison/Validation
+
+we are going to test the results against a curve (quadratic).
+
+
+
+### Fit a Quadratic to the Points
+
+
+$$\begin{equation}
+y_{i} = \beta_{0} + \beta_{1} x_{i} + \beta_{2} x_{i}^2
+\end{equation}
+$$
+
+
+```{r}
+FINTUBESQuad.lm = lm(RATIO~HEAT + I(HEAT^2), data = FINTUBES)
+
+
+plot(RATIO~HEAT,bg="Blue",pch=21,cex=1.2,
+   ylim=c(0,1.1*max(RATIO)),xlim=c(0,1.1*max(HEAT)),main="Scatter Plot and Quadratic of RATIO VS HEAT",data=FINTUBES)
+myplot = function(x){FINTUBESQuad.lm$coef[1] + FINTUBESQuad.lm$coef[2]*x + FINTUBESQuad.lm$coef[3]*x^2}
+curve(myplot, lwd = 2, add = TRUE)
+```
+
+
+The on the quadratic looks that it fit the linear trend
+
+
+
+A Vector of Fitted Values:
+```{r}
+FINTUBESQuad.fit = c(FINTUBES.fit)
+```
+
+#### A Plot of the Residuals versus Fitted Values
+
+```{r}
+plot(FINTUBESQuad.lm, which = 1)
+```
+
+
+There is symmetry about the y-axis 0 value, but, there are outliers. the linear trend continues even when a quadratic model is applied.
+
+
+
+#### Normality Check
+```{r}
+normcheck(FINTUBESQuad.lm, shapiro.wilk = TRUE)
+```
+
+The p-value is 0.056 which is >= $\alpha$ = 0.05. the results of the Shapiro-Wilk test shows that we can't reject the null hypothesis, leading us to assume that the data is distributed normally.
+
+
+### Summarize the Model
+
+```{r}
+summary(FINTUBESQuad.lm)
+```
+
+
+
+This gives us the values:
+
+$\beta_{0} = -0.15314$
+$\beta_{1} = 0.51402$
+$\beta_{2} = -0.01759$
+
+we can use these values to determine which model fit the data the linear or the quadratic.
+
+### Calculating the Confidence Interval
+
+```{r}
+ciReg(FINTUBESQuad.lm, conf.level = 0.95)
+```
+
+
+
+## Comparison of the Two Models
+
+### Making Predictions using the Two Models
+
+Making a prediction of the Unflooded area Ratio when the Heat Transfer Enhancement is 4.9, 5.3, 6 for the two models
+
+
+Model 1:
+
+```{r}
+amount = predict(FINTUBES.lm, data.frame(HEAT=c(4.9,5.3,6)))
+amount
+```
+
+
+Model 2:
+
+```{r}
+amount = predict(FINTUBESQuad.lm, data.frame(HEAT=c(4.9,5.3,6)))
+amount
+```
+
+
+
+The predictions  I made using the Second model (quadratic) are slightly larger than the predictions made by the second model (linear), but they are too close to one another.
+
+
+
+### Comparing R values
+
+For the linear model Multiple R-squared =  0.837, and	Adjusted R-squared =  0.8296
+For the Quadratic model Multiple R-squared =  0.841,	and Adjusted R-squared =  0.8259
+
+
+According to these results, both models have close assumptions. The response is explained identically by the linear and quadratic models when you examine the multiple $R^2$. this shows us that both models are are good analyzing the data, but the liner model is a little bit better for the data because in the quadratic model the value of Adjusted R-squared decreased.
+
+## Using Anova for Confirmation
+
+```{r}
+anova(FINTUBES.lm, FINTUBESQuad.lm)
+```
+
+
+
+
+## Avoiding Bias using Cook's Distance
+
+
+
+
+```{r}
+cooks20x(FINTUBES.lm)
+```
+
+
+```{r}
+FINTUBES2.lm = lm(RATIO~HEAT, data = FINTUBES[-16,])
+summary(FINTUBES2.lm)
+```
+```{r}
+summary(FINTUBES.lm)
+```
+
+
+# Conclusion
+
+
+## Reseach Question And Results
+
+
+The Research Question is this method of copper fin tubes good for enhancing heat transferring? The model is valid and satisfies the assumptions of the linear model and We can say that with 95% confidence that for by increasing the area the heat transfer enhancement increase by 0.27767 
+
+
+
+
+## Suggestions
+
+The experiment could be improved by covering  more accurate area and using exact material. this would distribute the variation across more area.
+
+
+# Refernces
+
+
+Mendenhall, William M., and Terry L. Sincich. 2016."Statistics for Engineering and Science". Simple Linear Regression. 6th ed. Florida, USA: Taylor & Francis Group, LLC.
+
+
+Fluid Dynamics. "Heat Exchanger Finned Tube - 8 types you should know about"
+https://www.fluiddynamics.com.au/case-studies-1/heat-exchanger-finned-tube-8-types-you-should-know-about#:~:text=Finned%20tube%20heat%20exchangers%20generally,power%20generation%2C%20marine%20and%20HVAC%26R.
+
+
+Shuangshuang Miao, Jiajia Sui, Yulong Zhang, Feng Yao, and Xiangdong Liu. "Experimental Study on Thermal Performance of a Bent Copper-Water Heat Pipe"
+https://www.hindawi.com/journals/ijae/2020/8632152/
+
+
+Wikipedia. “Cook’s Distance.” https://en.wikipedia.org/wiki/Cook%27s_distance.
+
+Wikipedia. “Shapiro–Wilk test”
+https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test
