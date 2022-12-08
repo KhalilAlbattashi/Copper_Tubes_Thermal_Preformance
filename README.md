@@ -1,5 +1,5 @@
 # Copper_Tubes_Thermal_Preformance
-Thermal performance of copper tubes used in refrigeration and process industry
+
 
 
 This project is all about applications of Simple Linear Regression to real data using R.
